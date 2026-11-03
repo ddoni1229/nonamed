@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>하나프로젝트</title>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="16" fill="#1f3a5f"/><text x="60" y="74" font-family="system-ui,sans-serif" font-size="44" font-weight="700" fill="#fff" text-anchor="middle">하나</text></svg></template>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+body{display:flex;flex-direction:column;background:#f5f6f8}
+#bar{display:flex;gap:2px;padding:8px 12px;background:#1f3a5f;flex:0 0 auto;overflow-x:auto}
+#bar button{border:0;background:transparent;color:#c8d4e4;font:600 13.5px/1 inherit;padding:9px 14px;border-radius:7px;cursor:pointer;white-space:nowrap}
+#bar button:hover{background:rgba(255,255,255,.1);color:#fff}
+#bar button.on{background:#fff;color:#1f3a5f}
+#stack{flex:1 1 auto;position:relative;min-height:0}
+#stack iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}
+#stack iframe.on{display:block}
+a{color:#1f3a5f}a:hover{color:#16304f}
+</style></head><body>
+<nav id="bar"></nav>
+<div id="stack"></div>
+<script>
+const BASE=[["home","대시보드","dashboard.html"],["partners","거래처","거래처등록.html"],["items","품목","품목리스트.html"],["sales","매출","매출관리.html"],["purchase","매입","매입관리.html"],["collect","입출금","입출금관리.html"],["tax","세금","세금관리.html"]];
+function navCfg(){try{const v=JSON.parse(localStorage.getItem("nonamed.nav.cfg.v1"))||{};return{order:v.order||[],labels:v.labels||{},hidden:v.hidden||[]}}catch(e){return{order:[],labels:{},hidden:[]}}}
+function pages(){const c=navCfg(),by=new Map(BASE.map(b=>[b[0],b]));const ord=c.order.filter(k=>by.has(k)).map(k=>by.get(k)).concat(BASE.filter(b=>!c.order.includes(b[0])));return ord.filter(b=>!c.hidden.includes(b[0])).map(b=>[c.labels[b[0]]||b[1],b[2]])}
+const PAGES=pages();
+const bar=document.getElementById("bar"),stack=document.getElementById("stack"),frames={},btns={};
+window.addEventListener("storage",e=>{if(e.key==="nonamed.nav.cfg.v1"){const cur=localStorage.getItem("hana.tab");bar.innerHTML="";pages().forEach(([label,src])=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.onclick=()=>show(src);bar.appendChild(b);btns[src]=b;if(!frames[src]){const f=document.createElement("iframe");f.title=label;stack.appendChild(f);frames[src]=f}});if(cur&&btns[cur])btns[cur].classList.add("on")}});
+function show(src){for(const k in frames){frames[k].classList.toggle("on",k===src);btns[k].classList.toggle("on",k===src)}
+if(!frames[src].dataset.loaded){frames[src].src=src;frames[src].dataset.loaded="1"}
+try{localStorage.setItem("hana.tab",src)}catch(e){}}
+PAGES.forEach(([label,src])=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.onclick=()=>show(src);bar.appendChild(b);btns[src]=b;
+const f=document.createElement("iframe");f.title=label;stack.appendChild(f);frames[src]=f});
+let start=PAGES[0][1];try{const s=localStorage.getItem("hana.tab");if(s&&frames[s])start=s}catch(e){}
+show(start);
+</script>
+</body></html>

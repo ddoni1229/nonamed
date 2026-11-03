@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>nonamed</title>
+<script>
+(function(){var s=null;try{s=JSON.parse(localStorage.getItem("nonamed.session.v1"));}catch(e){}
+var ok=s&&s.id&&(s.keep?(!s.exp||s.exp>Date.now()):sessionStorage.getItem("nonamed.sessionAlive.v1"));
+location.replace(ok?"dashboard.html":"login.html");})();
+</script>
+<noscript><meta http-equiv="refresh" content="0;url=login.html"></noscript>
+</head><body></body></html>

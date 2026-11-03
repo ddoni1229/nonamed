@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>매출관리 사용설명서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#F4EFE5; --bg-2:#EAE3D2; --ink:#1F1A14; --ink-2:#5A5247; --ink-3:#8B8273;
+    --line:rgba(31,26,20,.12); --line-soft:rgba(31,26,20,.06);
+    --card:#FBF8F2; --card-2:#F8F4EB; --accent:#D97757; --accent-soft:#F1DBCC; --accent-ink:#8C3F22;
+    --good:oklch(0.62 0.12 150);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans KR",ui-sans-serif,system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:880px; margin:0 auto; padding:48px clamp(20px,4vw,40px) 100px; }
+
+  .doc-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    border-bottom:2px solid var(--ink); padding-bottom:20px; margin-bottom:8px; }
+  .doc-kicker{ font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.2em; color:var(--ink-3); text-transform:uppercase; }
+  h1{ font-family:"Gowun Batang",serif; font-weight:700; font-size:clamp(28px,4vw,40px); letter-spacing:-.02em; margin:8px 0 0; }
+  .doc-sub{ font-size:14px; color:var(--ink-2); margin-top:8px; }
+  .doc-badge{ font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--ink-3);
+    border:1px solid var(--line); border-radius:999px; padding:6px 12px; white-space:nowrap; }
+
+  .toc{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px 22px; margin:28px 0 36px; }
+  .toc-t{ font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3); margin-bottom:12px; }
+  .toc ol{ margin:0; padding:0; list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:8px 24px; }
+  .toc a{ color:var(--ink); text-decoration:none; font-size:14.5px; display:flex; gap:10px; align-items:baseline; padding:4px 0; }
+  .toc a:hover{ color:var(--accent-ink); }
+  .toc .n{ font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--accent-ink); font-weight:500; }
+
+  section{ margin-bottom:40px; scroll-margin-top:24px; }
+  .sec-head{ display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+  .sec-num{ flex:none; width:38px; height:38px; border-radius:11px; background:var(--ink); color:var(--card);
+    display:grid; place-items:center; font-family:"Gowun Batang",serif; font-weight:700; font-size:18px; }
+  .sec-head h2{ font-family:"Gowun Batang",serif; font-weight:700; font-size:23px; letter-spacing:-.015em; margin:0; }
+
+  .lead{ font-size:15px; line-height:1.7; color:var(--ink-2); margin:0 0 18px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:6px 4px; margin-bottom:14px; }
+  .row{ display:grid; grid-template-columns:160px 1fr; gap:16px; padding:13px 18px; border-bottom:1px solid var(--line-soft); align-items:start; }
+  .row:last-child{ border-bottom:0; }
+  .row .k{ font-weight:600; font-size:14.5px; color:var(--ink); display:flex; align-items:center; gap:8px; }
+  .row .v{ font-size:14px; line-height:1.6; color:var(--ink-2); }
+  .row .v b{ color:var(--ink); font-weight:600; }
+  kbd{ display:inline-grid; place-items:center; min-width:22px; height:22px; padding:0 7px;
+    border:1px solid var(--line); border-bottom-width:2px; border-radius:6px; background:var(--card-2);
+    font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--ink); vertical-align:1px; }
+  .pill{ display:inline-block; font-size:11.5px; font-weight:600; padding:2px 9px; border-radius:999px; }
+  .pill-order{ background:color-mix(in oklab,var(--accent) 16%,transparent); color:var(--accent-ink); }
+  .pill-done{ background:color-mix(in oklab,var(--good) 18%,transparent); color:oklch(0.42 0.12 150); }
+
+  .steps{ counter-reset:s; margin:0; padding:0; list-style:none; }
+  .steps li{ counter-increment:s; position:relative; padding:10px 0 10px 40px; font-size:14.5px; line-height:1.6; color:var(--ink-2); border-bottom:1px dashed var(--line-soft); }
+  .steps li:last-child{ border-bottom:0; }
+  .steps li::before{ content:counter(s); position:absolute; left:0; top:9px; width:26px; height:26px; border-radius:50%;
+    background:var(--accent-soft); color:var(--accent-ink); display:grid; place-items:center; font-family:"JetBrains Mono",monospace; font-size:12px; font-weight:600; }
+  .steps li b{ color:var(--ink); font-weight:600; }
+
+  .tip{ background:color-mix(in oklab,var(--accent-soft) 45%,var(--card)); border:1px solid color-mix(in oklab,var(--accent) 28%,transparent);
+    border-radius:12px; padding:13px 16px; font-size:14px; line-height:1.6; color:var(--accent-ink); margin:14px 0; }
+  .tip b{ font-weight:700; }
+
+  .kbd-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+  .kbd-item{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:13px 16px; display:flex; align-items:center; gap:12px; }
+  .kbd-item .d{ font-size:13.5px; color:var(--ink-2); }
+  .kbd-item .d b{ color:var(--ink); font-weight:600; display:block; font-size:14px; }
+
+  .foot{ margin-top:48px; padding-top:20px; border-top:1px solid var(--line); font-size:12.5px; color:var(--ink-3); font-family:"JetBrains Mono",monospace; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .ico{ width:18px; height:18px; display:inline-grid; place-items:center; color:var(--accent-ink); }
+  .ico svg{ width:18px; height:18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="doc-head">
+    <div>
+      <div class="doc-kicker">nonamed · Sales Suite</div>
+      <h1>매출관리 사용설명서</h1>
+      <div class="doc-sub">매출 입력부터 조회·집계·거래명세서 인쇄까지, 화면 구성별 안내</div>
+    </div>
+    <div class="doc-badge">v4.2 · 2026.06</div>
+  </div>
+
+  <nav class="toc">
+    <div class="toc-t">목차</div>
+    <ol>
+      <li><a href="#s1"><span class="n">01</span> 상단 요약(KPI)</a></li>
+      <li><a href="#s2"><span class="n">02</span> 화면 탭 구성</a></li>
+      <li><a href="#s3"><span class="n">03</span> 기간 · 검색 필터</a></li>
+      <li><a href="#s4"><span class="n">04</span> 조회 테이블</a></li>
+      <li><a href="#s5"><span class="n">05</span> 새 매출 입력</a></li>
+      <li><a href="#s6"><span class="n">06</span> 카톡·문자 붙여넣기</a></li>
+      <li><a href="#s7"><span class="n">07</span> 품목 매핑</a></li>
+      <li><a href="#s8"><span class="n">08</span> 거래명세서 인쇄</a></li>
+      <li><a href="#s9"><span class="n">09</span> 기간요약 · 미수금</a></li>
+      <li><a href="#s10"><span class="n">10</span> 단축키 모음</a></li>
+    </ol>
+  </nav>
+
+  <!-- 01 -->
+  <section id="s1">
+    <div class="sec-head"><div class="sec-num">1</div><h2>상단 요약 (KPI)</h2></div>
+    <p class="lead">화면 맨 위 4개의 카드로 핵심 숫자를 한눈에 봅니다. 우측 <b>요약 접기/펼치기</b> 버튼으로 숨길 수 있습니다.</p>
+    <div class="card">
+      <div class="row"><div class="k">오늘 매출</div><div class="v">오늘 일자의 매출 합계와 건수</div></div>
+      <div class="row"><div class="k">거래 건수</div><div class="v">현재 선택된 기간의 전표 건수</div></div>
+      <div class="row"><div class="k">기간 매출 합계</div><div class="v">화면에 표시된 전표 기준 합계 금액</div></div>
+      <div class="row"><div class="k">주문 대기</div><div class="v"><span class="pill pill-order">주문</span> 상태(완료 전) 전표 건수</div></div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s2">
+    <div class="sec-head"><div class="sec-num">2</div><h2>화면 탭 구성</h2></div>
+    <p class="lead">매출 데이터를 4가지 방식으로 봅니다. 탭 오른쪽에는 <b>최근 전표</b> 히스토리가 가로로 표시되어, 클릭하면 해당 전표 수정 화면으로 바로 이동합니다.</p>
+    <div class="card">
+      <div class="row"><div class="k">조회</div><div class="v">전표 단위 목록. 가장 기본 화면이며 상태 변경·인쇄·정렬이 가능합니다.</div></div>
+      <div class="row"><div class="k">상세</div><div class="v">전표를 <b>품목 라인 단위</b>로 펼쳐서 봅니다. (일자·전표·거래처·품목·수량·단가·금액)</div></div>
+      <div class="row"><div class="k">기간요약</div><div class="v">거래처별 카드 + 품목별 집계. <b>1페이지 인쇄</b> 지원.</div></div>
+      <div class="row"><div class="k">미수금</div><div class="v">거래처별 전일잔액·매출액·수금액·잔액 집계.</div></div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s3">
+    <div class="sec-head"><div class="sec-num">3</div><h2>기간 · 검색 필터</h2></div>
+    <div class="card">
+      <div class="row"><div class="k">기간 선택</div><div class="v"><b>전체 · 금일 · 전일 · 다음일 · 이번주 · 다음주</b> 중 선택. "전체"를 고르면 우측에서 <b>날짜 범위</b>를 직접 지정할 수 있습니다.</div></div>
+      <div class="row"><div class="k">상태 필터</div><div class="v"><span class="pill pill-order">주문</span> <span class="pill pill-done">완료</span> 또는 전체로 필터. 탭처럼 눌러서 분류합니다.</div></div>
+      <div class="row"><div class="k">검색</div><div class="v">전표번호·거래처·품목·담당자로 검색. 결과는 즉시 반영됩니다.</div></div>
+    </div>
+    <p class="lead" style="margin-top:14px;">결과 값(건수·합계)과 미수금 집계는 모두 상단 기간 조건을 따라갑니다.</p>
+  </section>
+
+  <!-- 04 -->
+  <section id="s4">
+    <div class="sec-head"><div class="sec-num">4</div><h2>조회 테이블</h2></div>
+    <div class="card">
+      <div class="row"><div class="k">순번 · 상태</div><div class="v">행 앞에 순번(No)이 붙고, 상태 칸은 <b>드롭다운</b>으로 변경합니다. <span class="pill pill-order">주문</span>→<span class="pill pill-done">완료</span>로 바꾸려면 모든 품목코드가 매핑되어 있어야 합니다.</div></div>
+      <div class="row"><div class="k">열 위치 변경</div><div class="v">열 제목을 <b>드래그</b>해서 순서를 바꿉니다.</div></div>
+      <div class="row"><div class="k">열 너비 조절</div><div class="v">열 제목 오른쪽 경계를 드래그하면 너비가 바뀌고 저장됩니다. (조회·상세·미수금 공통)</div></div>
+      <div class="row"><div class="k">화면 설정</div><div class="v">우측 상단 <b>화면 설정</b>에서 표시할 열과 순서를 켜고 끕니다.</div></div>
+      <div class="row"><div class="k">인쇄 열</div><div class="v">각 행의 🖨 버튼으로 그 전표의 거래명세서를 바로 인쇄합니다.</div></div>
+      <div class="row"><div class="k">전표 열기</div><div class="v">행을 클릭하면 <b>수정 화면</b>(매출 입력)으로 열립니다.</div></div>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="s5">
+    <div class="sec-head"><div class="sec-num">5</div><h2>새 매출 입력</h2></div>
+    <p class="lead">제목 옆 <b>새 매출 입력</b> 버튼 또는 <kbd>F2</kbd>로 입력창을 엽니다. 키보드만으로 빠르게 입력할 수 있습니다.</p>
+    <ol class="steps">
+      <li><b>거래일자</b>에 커서가 위치합니다. 일(日) 칸에서 시작해 <kbd>Enter</kbd>로 다음 칸 이동.</li>
+      <li><b>거래처</b>를 입력하면 검색 팝업이 뜨고, 방향키+<kbd>Enter</kbd>로 선택하면 담당자 칸으로 이동합니다.</li>
+      <li><b>품목코드</b> 칸에 코드나 품목명 키워드를 입력하면 검색 팝업이 뜹니다. 선택 시 규격·단위·단가가 자동으로 채워집니다.</li>
+      <li>품목코드가 없는 줄은 아래에 <b>추천</b> 칩과 <b>직접매핑</b> 버튼이 나타납니다.</li>
+      <li>기본 7줄이며, 마지막 줄에 입력하면 빈 줄이 자동 추가됩니다.</li>
+      <li><kbd>F8</kbd> 또는 <b>매출 저장</b>으로 저장. 각 칸을 클릭하면 텍스트가 전체 선택됩니다.</li>
+    </ol>
+    <div class="tip"><b>품목코드는 필수값</b>입니다. 매핑 안 된 품목이 있는 전표는 자동으로 <span class="pill pill-order">주문</span> 상태로 저장됩니다.</div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s6">
+    <div class="sec-head"><div class="sec-num">6</div><h2>카톡·문자 붙여넣기</h2></div>
+    <p class="lead">상단 검색창에 주문 메시지를 붙여넣으면 자동으로 전표 입력창이 열립니다.</p>
+    <div class="card">
+      <div class="row"><div class="k">인식 형식</div><div class="v"><b>양배추 1</b>, <b>양배추 2박스</b>, <b>양배추 x2</b> 등. 한 줄에 품목+수량.</div></div>
+      <div class="row"><div class="k">거래처 우선</div><div class="v">품목만 있으면 거래처 칸으로 먼저 커서가 가고, 거래처를 입력하면 그 거래처의 저장된 단가·코드를 불러옵니다.</div></div>
+      <div class="row"><div class="k">자동 매핑</div><div class="v">명칭·규격이 같으면 코드가 자동 연결됩니다. 없으면 추천/직접매핑으로 연결합니다.</div></div>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="s7">
+    <div class="sec-head"><div class="sec-num">7</div><h2>품목 매핑</h2></div>
+    <p class="lead">거래처마다 부르는 이름이 달라도 같은 품목으로 인식하도록 연결하는 장부입니다. 상단 <b>품목 매핑</b> 버튼으로 엽니다.</p>
+    <div class="card">
+      <div class="row"><div class="k">구성</div><div class="v">거래처명 · 거래처가 부르는 이름 · 품목명 · 규격 · 단위 순으로 정리됩니다.</div></div>
+      <div class="row"><div class="k">등록 방법</div><div class="v">매출 입력 중 <b>직접매핑</b>으로 연결하거나, 전표를 <b>저장</b>하면 자동으로 거래처별 매핑에 쌓입니다.</div></div>
+      <div class="row"><div class="k">신규 품목</div><div class="v">품목 검색 팝업에서 <b>신규 등록</b>(F2)을 누르면 새 품목 등록 팝업이 떠서 바로 만들고 연결합니다.</div></div>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section id="s8">
+    <div class="sec-head"><div class="sec-num">8</div><h2>거래명세서 인쇄</h2></div>
+    <p class="lead">행의 인쇄 버튼, 전표 상세의 인쇄, 또는 여러 건 선택 후 <b>거래명세서 인쇄</b>를 누르면 <b>양식 선택 + 미리보기</b> 팝업이 뜹니다.</p>
+    <div class="card">
+      <div class="row"><div class="k">1장 양식</div><div class="v">A4 한 장에 명세서 1부.</div></div>
+      <div class="row"><div class="k">2장(보관용)</div><div class="v">한 장에 <b>공급받는자 보관용(파랑)</b> + <b>공급자 보관용(빨강)</b> 2부.</div></div>
+      <div class="row"><div class="k">미리보기</div><div class="v">양식을 바꾸면 미리보기가 즉시 갱신됩니다. 여러 건 선택 시 모두 인쇄됩니다.</div></div>
+      <div class="row"><div class="k">화면인쇄</div><div class="v">툴바 오른쪽 <b>화면인쇄</b>는 현재 조회된 목록 자체를 인쇄합니다.</div></div>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s9">
+    <div class="sec-head"><div class="sec-num">9</div><h2>기간요약 · 미수금</h2></div>
+    <div class="card">
+      <div class="row"><div class="k">기간요약</div><div class="v">거래처별 카드(품목·수량)와 그 아래 품목별 집계표. <b>1페이지로 인쇄</b>하면 A4 한 장에 자동으로 맞춰집니다.</div></div>
+      <div class="row"><div class="k">미수금</div><div class="v"><b>거래처명 · 전일잔액 · 매출액 · 수금액 · 잔액</b> 구조. 잔액 = 전일잔액 + 매출액 − 수금액. 상단 기간 조건을 따릅니다.</div></div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <div class="sec-head"><div class="sec-num">10</div><h2>단축키 모음</h2></div>
+    <div class="kbd-grid">
+      <div class="kbd-item"><kbd>F2</kbd><div class="d"><b>새 매출 입력</b>창 열기</div></div>
+      <div class="kbd-item"><kbd>F8</kbd><div class="d"><b>저장</b> (입력창 안)</div></div>
+      <div class="kbd-item"><kbd>F4</kbd><div class="d"><b>거래처</b> 칸 포커스</div></div>
+      <div class="kbd-item"><kbd>F3</kbd><div class="d"><b>품목 검색</b> 팝업</div></div>
+      <div class="kbd-item"><kbd>Enter</kbd><div class="d">다음 칸 / 항목 <b>이동·선택</b></div></div>
+      <div class="kbd-item"><kbd>Ctrl</kbd>+<kbd>Del</kbd><div class="d">현재 <b>행 삭제</b></div></div>
+      <div class="kbd-item"><kbd>↑</kbd><kbd>↓</kbd><div class="d">검색 후보 / 셀 <b>이동</b></div></div>
+      <div class="kbd-item"><kbd>Esc</kbd><div class="d">팝업 <b>닫기</b></div></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>nonamed Sales Suite · 매출관리</span>
+    <span>고객지원 1588-0000</span>
+  </div>
+
+</div>
+</body>
+</html>

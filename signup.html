@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>nonamed · 회원가입</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --bg: #F1ECE3;
+    --bg-2: #E8E1D4;
+    --ink: #1F1A14;
+    --ink-2: #5A5247;
+    --ink-3: #8B8273;
+    --line: #1F1A14;
+    --card: #FBF8F2;
+    --accent: oklch(0.68 0.13 45);     /* warm terracotta */
+    --accent-ink: oklch(0.32 0.08 45);
+    --good: oklch(0.62 0.12 150);
+    --bad:  oklch(0.58 0.18 25);
+    --r-input: 999px;
+    --r-card: 50%;
+    --shadow-soft: 0 30px 80px -20px rgba(31,26,20,.18),
+                   0 8px 24px -8px rgba(31,26,20,.10);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans KR","Pretendard",ui-sans-serif,system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;font-feature-settings:"ss01","tnum";
+    min-height:100vh;overflow-x:hidden;
+    word-break: keep-all; overflow-wrap: break-word;}
+
+  /* Soft warm radial wash */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(60% 50% at 20% 15%, rgba(217,119,87,.10), transparent 60%),
+      radial-gradient(70% 60% at 85% 95%, rgba(165,143,103,.16), transparent 65%),
+      radial-gradient(40% 35% at 50% 110%, rgba(31,26,20,.06), transparent 70%);
+  }
+
+  .stage{
+    position:relative;z-index:1;
+    min-height:100vh;
+    display:grid;
+    grid-template-columns: 1fr;
+    place-items:center;
+    padding: clamp(24px, 4vw, 56px);
+  }
+
+  /* Brand mark in top-left */
+  .brandbar{
+    position:fixed;top:28px;left:32px;z-index:5;
+    display:flex;align-items:center;gap:10px;
+    font-size:13px;letter-spacing:.02em;color:var(--ink-2);
+  }
+  .brandbar-mark{ width:34px;height:34px;display:block;overflow:visible; }
+  .brandbar b{font-weight:600;color:var(--ink)}
+
+  .footbar{
+    position:fixed;bottom:22px;left:0;right:0;z-index:5;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:0 32px;font-family:"JetBrains Mono",monospace;
+    font-size:11px;color:var(--ink-3);letter-spacing:.04em;
+  }
+  .footbar .v{display:flex;gap:18px}
+  .footbar .v span::before{content:"·";margin-right:8px;color:#bbac8c}
+  .footbar .v span:first-child::before{content:"";margin:0}
+
+  #app{width:100%;display:flex;justify-content:center}
+</style>
+</head>
+<body style="background-color: rgb(255, 255, 255)">
+  <div class="brandbar">
+    <svg class="brandbar-mark" viewBox="0 0 40 40" aria-hidden="true">
+      <g fill="none" stroke="var(--ink)" stroke-linecap="round">
+        <path d="M15.66 8.32Q19.71 6.61 22.02 6.49Q24.33 6.37 26.47 7.30Q28.61 8.24 30.53 9.60Q32.44 10.96 33.33 13.11Q34.21 15.25 34.25 17.43Q34.29 19.61 34.63 21.76Q34.98 23.92 34.11 25.93Q33.24 27.94 32.23 30.08Q31.21 32.21 28.76 32.56Q26.31 32.91 24.24 33.20Q22.16 33.50 19.94 34.06Q17.72 34.63 15.32 34.23Q12.91 33.83 11.10 32.20Q9.29 30.57 8.73 28.25Q8.17 25.93 6.83 23.93Q5.50 21.93 6.76 19.83Q8.03 17.72 8.40 15.63Q8.78 13.53 10.14 11.86Q11.51 10.18 13.30 8.87Q15.09 7.55 17.30 7.20Q19.51 6.84 21.82 6.54T24.12 6.23" stroke-width="1" opacity="0.95" vector-effect="non-scaling-stroke"/>
+        <path d="M24.23 33.28Q19.35 33.05 16.77 33.00Q14.19 32.95 12.15 31.53Q10.11 30.11 8.60 28.30Q7.08 26.48 7.22 24.28Q7.36 22.07 6.65 19.98Q5.94 17.88 7.08 16.01Q8.22 14.13 9.47 12.24Q10.73 10.35 12.99 9.36Q15.25 8.37 17.76 8.24Q20.27 8.10 22.65 8.62Q25.03 9.14 26.91 10.42Q28.80 11.71 30.33 13.20Q31.85 14.68 33.65 16.33Q35.44 17.98 34.98 20.13Q34.52 22.29 34.57 24.51Q34.62 26.74 32.58 28.06Q30.55 29.38 28.64 30.47Q26.74 31.55 24.65 32.80Q22.57 34.05 20.08 33.56T17.60 33.07" stroke-width="0.75" opacity="0.85" vector-effect="non-scaling-stroke"/>
+        <path d="M7.01 24.30Q7.29 20.40 7.48 18.44Q7.68 16.48 8.47 14.51Q9.27 12.54 11.34 11.63Q13.41 10.72 15.02 9.10Q16.64 7.49 18.89 7.00Q21.15 6.52 23.38 6.91Q25.61 7.30 27.07 8.92Q28.53 10.54 30.35 11.52Q32.17 12.49 33.07 14.28Q33.97 16.07 33.93 18.06Q33.89 20.05 34.37 22.13Q34.86 24.21 33.65 26.04Q32.44 27.88 31.11 29.63Q29.78 31.39 27.83 32.58Q25.89 33.78 23.62 33.74Q21.36 33.70 19.15 34.17Q16.94 34.63 14.67 34.22Q12.40 33.81 10.69 32.39Q8.98 30.97 7.69 29.21Q6.40 27.45 5.93 25.34Q5.45 23.22 5.74 21.09T6.03 18.95" stroke-width="1.1" opacity="0.9" vector-effect="non-scaling-stroke"/>
+        <path d="M12.41 30.21Q8.63 27.12 7.57 25.01Q6.51 22.89 6.94 20.84Q7.38 18.78 7.61 16.85Q7.84 14.91 8.60 13.05Q9.36 11.18 11.13 10.11Q12.91 9.03 15.17 9.14Q17.44 9.25 19.55 9.63Q21.66 10.01 23.83 10.59Q26.01 11.17 28.28 12.32Q30.55 13.47 31.58 15.65Q32.61 17.83 32.83 19.95Q33.06 22.07 33.59 24.28Q34.13 26.49 32.98 28.19Q31.84 29.89 30.43 31.33Q29.03 32.77 26.90 33.18Q24.78 33.59 22.64 34.27Q20.51 34.96 18.10 34.28Q15.68 33.60 13.91 31.78Q12.13 29.96 10.33 28.35T8.53 26.74" stroke-width="0.6" opacity="0.75" vector-effect="non-scaling-stroke"/>
+        <path d="M25.91 32.06Q21.69 32.42 19.67 31.46Q17.64 30.50 15.57 30.28Q13.51 30.06 11.59 28.99Q9.68 27.91 8.96 25.95Q8.23 23.99 6.46 22.42Q4.68 20.85 5.23 18.92Q5.78 16.98 5.55 15.00Q5.32 13.01 6.37 11.42Q7.42 9.84 9.01 8.77Q10.61 7.70 12.63 7.55Q14.65 7.40 16.43 6.71Q18.21 6.01 20.25 6.33Q22.30 6.64 24.15 7.64Q26.01 8.64 27.26 10.22Q28.51 11.80 29.71 13.28Q30.90 14.76 31.99 16.45Q33.09 18.14 33.19 20.02Q33.28 21.90 32.52 23.52Q31.75 25.14 31.32 27.06Q30.89 28.98 29.09 29.84Q27.28 30.70 25.41 31.29Q23.53 31.88 21.48 31.89Q19.43 31.89 17.44 31.24T15.44 30.59" stroke-width="0.95" opacity="0.9" vector-effect="non-scaling-stroke"/>
+        <path d="M33.32 32.18Q29.42 34.10 27.76 35.29Q26.10 36.48 24.07 36.56Q22.05 36.63 20.06 36.43Q18.08 36.23 16.03 35.75Q13.98 35.26 12.15 33.96Q10.33 32.65 9.06 30.69Q7.80 28.74 7.92 26.34Q8.03 23.94 7.69 21.89Q7.36 19.84 7.28 17.64Q7.20 15.43 8.49 13.82Q9.79 12.21 10.79 10.38Q11.78 8.55 13.50 7.51Q15.22 6.47 17.16 6.12Q19.11 5.78 21.11 5.74Q23.10 5.69 25.08 6.32Q27.07 6.95 28.57 8.53Q30.07 10.12 32.14 11.28Q34.21 12.45 34.06 15.00Q33.90 17.55 34.65 19.63Q35.40 21.71 34.78 23.76Q34.16 25.81 34.14 28.21Q34.12 30.62 32.44 31.97Q30.77 33.33 29.32 34.96Q27.86 36.59 25.71 36.57T23.56 36.55" stroke-width="0.55" opacity="0.7" vector-effect="non-scaling-stroke"/>
+        <path d="M31.91 26.00Q28.85 29.65 26.83 30.76Q24.81 31.88 22.73 32.72Q20.65 33.56 18.34 34.01Q16.03 34.46 13.49 34.30Q10.95 34.13 9.40 32.23Q7.84 30.33 6.53 28.43Q5.23 26.53 5.01 24.23Q4.80 21.94 5.19 19.72Q5.59 17.51 6.54 15.44Q7.49 13.38 9.17 11.80Q10.85 10.22 12.75 8.69Q14.65 7.15 17.08 7.07Q19.50 6.98 21.67 7.68Q23.85 8.37 26.01 9.15Q28.16 9.94 30.05 11.43Q31.93 12.92 32.01 15.35Q32.09 17.78 32.06 19.96Q32.03 22.13 31.54 24.32Q31.06 26.50 30.01 28.69T28.96 30.87" stroke-width="0.85" opacity="0.85" vector-effect="non-scaling-stroke"/>
+        <path d="M15.86 7.60Q20.24 5.31 22.56 6.52Q24.88 7.74 27.06 9.02Q29.24 10.31 30.52 12.44Q31.80 14.58 32.77 16.81Q33.74 19.03 33.71 21.37Q33.68 23.71 32.39 25.51Q31.11 27.31 30.15 29.40Q29.20 31.50 27.15 32.70Q25.09 33.91 22.57 34.02Q20.06 34.13 17.55 33.49Q15.04 32.85 12.72 31.52Q10.41 30.20 8.88 28.04Q7.35 25.88 6.24 23.54Q5.13 21.19 5.15 18.72Q5.16 16.25 6.33 14.24Q7.49 12.23 8.97 10.61Q10.45 8.98 12.40 7.93Q14.36 6.87 16.63 6.17Q18.90 5.47 21.18 6.69T23.47 7.92" stroke-width="0.45" opacity="0.6" vector-effect="non-scaling-stroke"/>
+        <path d="M29.58 29.51Q26.61 31.68 24.93 32.51Q23.24 33.35 21.32 33.91Q19.39 34.48 17.26 34.50Q15.12 34.52 13.20 33.50Q11.29 32.48 9.80 30.92Q8.31 29.36 8.07 27.17Q7.83 24.97 6.73 23.27Q5.64 21.57 5.83 19.61Q6.02 17.64 6.07 15.59Q6.11 13.54 7.60 12.14Q9.08 10.75 10.54 9.58Q12.00 8.42 13.63 7.60Q15.26 6.77 17.05 6.36Q18.84 5.95 20.68 6.13Q22.51 6.30 24.29 6.82Q26.08 7.34 27.88 8.12Q29.69 8.90 31.41 10.15Q33.14 11.40 33.29 13.55Q33.44 15.70 34.40 17.59Q35.37 19.47 34.40 21.34Q33.44 23.21 32.91 25.04Q32.37 26.87 31.43 28.62Q30.48 30.37 29.00 31.80Q27.53 33.23 25.38 33.15T23.24 33.07" stroke-width="0.8" opacity="0.85" vector-effect="non-scaling-stroke"/>
+        <path d="M14.75 7.62Q18.83 4.34 21.18 4.84Q23.54 5.35 25.71 6.29Q27.88 7.24 29.55 8.90Q31.23 10.57 31.62 12.93Q32.01 15.29 32.61 17.39Q33.21 19.49 33.60 21.89Q33.98 24.29 32.22 26.08Q30.46 27.86 29.28 29.87Q28.10 31.89 26.10 33.14Q24.09 34.40 21.80 34.78Q19.51 35.16 17.25 34.94Q14.99 34.72 13.25 33.33Q11.52 31.93 9.01 31.40Q6.50 30.86 5.30 28.73Q4.11 26.61 4.42 24.13Q4.73 21.66 4.28 19.30Q3.83 16.94 4.64 14.60Q5.45 12.26 7.28 10.60Q9.11 8.94 11.40 8.32Q13.69 7.71 15.73 6.88T17.77 6.06" stroke-width="0.5" opacity="0.65" vector-effect="non-scaling-stroke"/>
+        <path d="M33.14 23.83Q30.00 27.01 28.12 28.10Q26.23 29.19 24.46 30.63Q22.68 32.08 20.35 31.63Q18.03 31.19 15.79 31.21Q13.55 31.23 11.91 29.89Q10.27 28.56 8.21 27.62Q6.16 26.69 6.09 24.57Q6.03 22.46 4.95 20.70Q3.87 18.94 4.51 17.04Q5.16 15.13 5.66 13.11Q6.17 11.09 7.72 9.49Q9.27 7.89 11.43 7.05Q13.59 6.21 15.87 6.39Q18.15 6.57 20.37 6.26Q22.58 5.96 24.54 6.89Q26.49 7.82 28.46 8.83Q30.43 9.84 31.61 11.60Q32.80 13.35 33.48 15.33Q34.16 17.32 33.23 19.27Q32.30 21.23 31.76 23.12Q31.22 25.01 30.10 26.83T28.98 28.64" stroke-width="1" opacity="0.9" vector-effect="non-scaling-stroke"/>
+        <path d="M24.44 32.20Q20.74 33.86 18.74 33.08Q16.73 32.29 14.88 31.71Q13.02 31.13 10.96 30.49Q8.90 29.85 7.63 28.30Q6.36 26.75 5.18 25.08Q3.99 23.41 4.23 21.52Q4.48 19.62 5.15 17.96Q5.81 16.29 6.84 14.86Q7.86 13.43 9.33 12.40Q10.80 11.36 12.11 9.90Q13.43 8.44 15.52 8.15Q17.62 7.87 19.62 8.63Q21.62 9.39 23.40 10.09Q25.18 10.80 27.37 11.27Q29.57 11.73 30.97 13.24Q32.36 14.75 32.23 16.70Q32.09 18.65 32.95 20.35Q33.81 22.05 33.70 23.90Q33.60 25.75 32.18 27.09Q30.77 28.43 29.51 29.78Q28.26 31.12 26.41 31.80Q24.56 32.48 22.64 33.11Q20.72 33.74 18.58 33.67T16.44 33.61" stroke-width="0.7" opacity="0.8" vector-effect="non-scaling-stroke"/>
+        <path d="M30.11 12.16Q33.31 14.78 34.33 16.64Q35.35 18.50 35.66 20.59Q35.98 22.68 35.73 24.75Q35.48 26.83 34.22 28.42Q32.96 30.01 32.06 31.84Q31.15 33.67 29.34 34.56Q27.52 35.45 25.49 35.41Q23.45 35.38 21.60 35.27Q19.75 35.16 17.59 35.87Q15.44 36.57 13.52 35.48Q11.61 34.38 10.66 32.30Q9.71 30.22 8.51 28.64Q7.31 27.05 6.52 25.19Q5.73 23.34 5.58 21.35Q5.42 19.37 5.89 17.49Q6.36 15.61 6.97 13.75Q7.57 11.88 9.37 11.02Q11.16 10.17 12.67 9.27Q14.19 8.37 15.78 7.25Q17.38 6.13 19.36 6.23Q21.34 6.33 23.20 7.06Q25.06 7.78 26.96 8.52Q28.86 9.26 30.51 10.60Q32.15 11.94 33.07 13.86T33.98 15.77" stroke-width="0.4" opacity="0.55" vector-effect="non-scaling-stroke"/>
+        <path d="M35.91 23.78Q32.63 27.63 31.39 29.62Q30.15 31.62 28.29 33.18Q26.44 34.75 24.11 35.13Q21.78 35.50 19.43 35.70Q17.09 35.90 14.96 34.98Q12.83 34.07 11.18 32.49Q9.53 30.91 8.10 29.09Q6.66 27.27 5.99 24.96Q5.31 22.65 6.24 20.32Q7.17 17.99 8.11 15.96Q9.05 13.93 9.71 11.42Q10.37 8.91 12.80 8.32Q15.23 7.72 17.25 6.41Q19.26 5.10 21.59 5.12Q23.93 5.15 25.83 6.40Q27.73 7.65 29.73 8.63Q31.73 9.61 32.82 11.59Q33.90 13.57 34.55 15.73Q35.19 17.89 34.65 20.12Q34.11 22.36 34.48 24.96T34.84 27.57" stroke-width="0.65" opacity="0.75" vector-effect="non-scaling-stroke"/>
+      </g>
+    </svg>
+    <span><b>nonamed</b> &nbsp;Sales Management Suite</span>
+  </div>
+
+  <div class="stage">
+    <div id="app"></div>
+  </div>
+
+  <div class="footbar">
+    <span>v4.2.1 · build 20260511</span>
+    <div class="v">
+      <span>한국어</span>
+      <span>고객지원 1588-0000</span>
+      <span>도움말</span>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="shell.jsx"></script>
+  <script type="text/babel" src="signup.jsx"></script>
+</body>
+</html>

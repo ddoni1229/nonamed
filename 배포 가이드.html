@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>nonamed · 배포 가이드</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F1ECE3;--card:#FBF8F2;--ink:#1F1A14;--ink-2:#5A5247;--ink-3:#8B8273;--line:rgba(31,26,20,.12);--accent:#D97757}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 "IBM Plex Sans KR",sans-serif;word-break:keep-all}
+a{color:#A8502F}a:hover{color:var(--ink)}
+.page{max-width:820px;margin:0 auto;padding:48px 24px 80px;display:flex;flex-direction:column;gap:28px}
+h1{margin:0;font-size:30px;letter-spacing:-.02em}h2{margin:0 0 12px;font-size:19px}h3{margin:0;font-size:15px}
+.sub{margin:6px 0 0;color:var(--ink-2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 26px}
+.road{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.road li{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:14px;align-items:start;padding:12px 0;border-top:1px solid var(--line)}
+.road li:first-child{border-top:0}
+.n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:600 13px "JetBrains Mono",monospace;background:#fff;border:1px solid var(--line)}
+.road li.now .n{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.road p{margin:2px 0 0;color:var(--ink-2);font-size:13.5px}
+.tag{font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.road li.now .tag{background:var(--accent);border-color:var(--accent);color:#fff}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:16px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:30px minmax(0,1fr);gap:12px}
+.steps li::before{content:counter(s);width:26px;height:26px;border-radius:8px;background:var(--ink);color:var(--card);display:grid;place-items:center;font:600 12px "JetBrains Mono",monospace;margin-top:1px}
+.steps p{margin:4px 0 0;color:var(--ink-2);font-size:14px}
+code,kbd{font-family:"JetBrains Mono",monospace;font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--ink)}
+.note{border-radius:14px;padding:14px 16px;background:#fff;border:1px solid var(--line);font-size:13.5px;color:var(--ink-2)}
+.note b{color:var(--ink)}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.cols{grid-template-columns:1fr}.road li{grid-template-columns:34px minmax(0,1fr)}.road .tag{display:none}}
+</style></head>
+<body><main class="page">
+<header><h1>nonamed 배포 가이드</h1><p class="sub">GitHub Pages(화면) + Supabase(데이터·로그인)로 실제 서비스를 여는 순서입니다. 한 단계씩 진행합니다.</p></header>
+
+<section class="card"><h2>전체 순서</h2>
+<ol class="road">
+<li><span class="n">1</span><div><h3>GitHub Pages에 올리기</h3><p>인터넷 주소가 생깁니다. 이 단계에서는 데이터가 아직 각자 브라우저에만 저장됩니다.</p></div><span class="tag">완료 후 주소 알려주기</span></li>
+<li class="now"><span class="n">2</span><div><h3>Supabase 테이블 만들기</h3><p>회사·구성원·거래처·품목·전표 테이블과 보안 규칙(회사끼리 데이터가 섞이지 않게)을 SQL로 드립니다. 붙여넣고 실행만 하면 됩니다.</p></div><span class="tag">지금</span></li>
+<li><span class="n">3</span><div><h3>로그인을 Supabase로 교체</h3><p>이메일·비밀번호 가입과 로그인, 비밀번호 재설정 메일. 카카오·구글 로그인은 그다음에 붙입니다.</p></div><span class="tag"></span></li>
+<li><span class="n">4</span><div><h3>데이터 저장을 서버로 교체</h3><p>브라우저 저장 대신 Supabase에 저장. 이때부터 다른 PC·직원과 같은 장부를 씁니다.</p></div><span class="tag"></span></li>
+<li><span class="n">5</span><div><h3>정기결제 연결</h3><p>토스페이먼츠 등 PG 가입·심사가 필요합니다(사업자등록 필수). 결제 처리는 Supabase 서버 함수에서 합니다.</p></div><span class="tag"></span></li>
+<li><span class="n">6</span><div><h3>속도 개선·도메인</h3><p>첫 로딩을 빠르게 하는 빌드 작업과 원하는 주소(예: nonamed.kr) 연결.</p></div><span class="tag"></span></li>
+</ol></section>
+
+<section class="card"><h2>1단계 · GitHub Pages에 올리기</h2>
+<ol class="steps">
+<li><div><h3>프로젝트 파일 받기</h3><p>채팅의 다운로드 카드에서 zip을 받아 압축을 풉니다.</p></div></li>
+<li><div><h3>저장소 만들기</h3><p><a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a> 에서 Repository name에 <code>nonamed</code> 입력, <b>Public</b> 선택 후 <kbd>Create repository</kbd>.</p></div></li>
+<li><div><h3>파일 올리기</h3><p>새 저장소 화면의 <b>uploading an existing file</b> 링크를 누르고, 압축 푼 폴더 안의 파일을 전부 끌어다 놓습니다. <code>uploads</code> 폴더는 빼도 됩니다. 아래 <kbd>Commit changes</kbd>.</p></div></li>
+<li><div><h3>Pages 켜기</h3><p>저장소 <b>Settings › Pages</b> 에서 Source를 <b>Deploy from a branch</b>, Branch를 <code>main</code> / <code>(root)</code>로 두고 <kbd>Save</kbd>.</p></div></li>
+<li><div><h3>접속 확인</h3><p>1~2분 뒤 <code>https://(내 GitHub 아이디).github.io/nonamed/</code> 로 들어가면 로그인 화면이 나옵니다. 주소를 알려주시면 다음 단계로 넘어갑니다.</p></div></li>
+</ol></section>
+
+<section class="card"><h2>2단계 · Supabase 테이블 만들기</h2>
+<ol class="steps">
+<li><div><h3>새 프로젝트 만들기</h3><p><a href="https://supabase.com/dashboard" target="_blank" rel="noopener">supabase.com/dashboard</a> › <kbd>New project</kbd>. 이름 <code>nonamed</code>, Region은 <b>Northeast Asia (Seoul)</b>, DB 비밀번호는 따로 적어 두세요.</p></div></li>
+<li><div><h3>SQL 실행</h3><p>왼쪽 <b>SQL Editor</b> › <kbd>New query</kbd> 에 프로젝트 파일의 <code>supabase/schema.sql</code> 내용을 전부 붙여넣고 <kbd>Run</kbd>. 아래에 <b>Success. No rows returned</b>가 나오면 됩니다.</p></div></li>
+<li><div><h3>확인</h3><p>왼쪽 <b>Table Editor</b>에 <code>companies · members · profiles · records · settings</code> 5개가 보이고, 각 표 옆에 자물쇠(RLS)가 켜져 있으면 성공입니다.</p></div></li>
+<li><div><h3>이메일 로그인 설정</h3><p><b>Authentication › Sign In / Providers › Email</b> 이 켜져 있는지 확인. 테스트 중에는 <b>Confirm email</b>을 꺼 두면 가입 즉시 로그인됩니다. <b>Authentication › URL Configuration</b>의 Site URL에 1단계 주소(<code>https://아이디.github.io/nonamed/</code>)를 넣습니다.</p></div></li>
+<li><div><h3>키 2개 넣기</h3><p><b>Project Settings › API</b>에서 <b>Project URL</b>과 <b>anon public</b> 키를 복사해, 프로젝트의 <code>supabase-config.js</code>에 붙여넣고 GitHub에 다시 올립니다. 이 두 값은 채팅에 붙여 주셔도 됩니다.</p></div></li>
+</ol>
+<div class="note" style="margin-top:16px"><b>표 구성 요약.</b> 회사(초대코드·7일 체험·결제 상태), 구성원(권한·메뉴별 권한), 업무 데이터(거래처·품목·매입·매출·조정·입출금·세금·활동을 한 표에 종류별로), 화면설정. 보안 규칙으로 <b>같은 회사 구성원만</b> 읽고, <b>조회전용이 아니면서 체험 중이거나 결제된 회사만</b> 쓸 수 있습니다. 결제 상태는 화면에서 바꿀 수 없고 5단계 서버 함수만 기록합니다.</div>
+</section>
+
+<section class="cols">
+<div class="note"><b>코드가 공개됩니다.</b> 무료 계정의 GitHub Pages는 Public 저장소만 됩니다. 화면 코드가 보일 뿐 고객 데이터는 아닙니다. 코드를 숨기고 싶으면 Cloudflare Pages나 Netlify(비공개 저장소 무료)로 옮기면 되고, 방법은 같습니다.</div>
+<div class="note"><b>Supabase 키 관련.</b> 2단계에서 쓰는 <code>anon</code> 키는 원래 공개용이라 화면 코드에 들어가도 됩니다. 실제 보호는 테이블 보안 규칙(RLS)이 합니다. <code>service_role</code> 키는 절대 화면 코드나 채팅에 붙이지 마세요.</div>
+</section>
+</main></body></html>
