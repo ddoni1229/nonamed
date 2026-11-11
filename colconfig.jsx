@@ -1703,7 +1703,7 @@ function CommonTopBar({ crumb }) {
         <button className="ctb-ic" type="button" title="전체화면">{ic("M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5")}</button>
         <button className="ctb-ic has-dot" type="button" title="메시지">{ic("M4 6h16v12H4zM4 7l8 6 8-6")}</button>
         <button className="ctb-ic has-dot" type="button" title="알림">{ic("M18 16H6c1.2-1.2 1.8-2 1.8-6a4.2 4.2 0 018.4 0c0 4 .6 4.8 1.8 6zM10.5 19a1.8 1.8 0 003 0")}</button>
-        <button className="ctb-ic" type="button" title="로그아웃" onClick={() => { try { localStorage.removeItem("nonamed.session.v1"); } catch (e) {} window.location.href = "login.html"; }}>{ic("M12 3v8M6.3 6.3a8 8 0 1011.4 0")}</button>
+        <button className="ctb-ic" type="button" title="로그아웃" onClick={() => { if (window.acLogout) { window.acLogout(); return; } try { localStorage.removeItem("nonamed.session.v1"); } catch (e) {} window.location.href = "login.html"; }}>{ic("M12 3v8M6.3 6.3a8 8 0 1011.4 0")}</button>
         <button className="ctb-ic" type="button" title="메뉴">{ic("M4 6h16M4 12h16M4 18h10")}</button>
       </div>
     </header>

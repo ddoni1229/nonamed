@@ -21,12 +21,14 @@ function SuField({ k, label, value, onChange, type = "text", focused, setFocused
 
 function SignupApp() {
   const [step, setStep] = useState(1);
-  const [f, setF] = useState({ company: "", ceo: "", biz: "", phone: "", id: "", pw: "", pw2: "", email: "", agree: false });
+  const [f, setF] = useState({ company: "", ceo: "", biz: "", phone: "", email: "", pw: "", pw2: "", agree: false });
   const [errs, setErrs] = useState({});
   const [focused, setFocused] = useState(null);
   const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [needConfirm, setNeedConfirm] = useState(false);
+  const [serverErr, setServerErr] = useState("");
   const firstRef = useRef(null);
   const set = (k) => (v) => { setF(p => ({ ...p, [k]: v })); setErrs(e => { const n = { ...e }; delete n[k]; return n; }); };
   useEffect(() => { setTimeout(() => firstRef.current?.focus(), 60); }, [step]);
@@ -41,28 +43,28 @@ function SignupApp() {
   };
   const validate2 = () => {
     const n = {};
-    if (!/^[a-z0-9_]{4,20}$/i.test(f.id)) n.id = "아이디는 영문·숫자 4~20자입니다.";
-    if (f.pw.length < 8) n.pw = "비밀번호는 8자 이상이어야 합니다.";
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim())) n.email = "로그인에 쓸 이메일을 입력해 주세요.";
+    if (f.pw.length < 8 || !/[A-Za-z]/.test(f.pw) || !/\d/.test(f.pw)) n.pw = "영문·숫자를 포함해 8자 이상 입력해 주세요.";
     if (f.pw2 !== f.pw) n.pw2 = "비밀번호가 일치하지 않습니다.";
-    if (f.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email)) n.email = "이메일 형식을 확인해 주세요.";
     if (!f.agree) n.agree = "이용약관과 개인정보 처리방침에 동의해 주세요.";
     return n;
   };
   const next = (e) => { e.preventDefault(); const n = validate1(); setErrs(n); if (Object.keys(n).length) return; setStep(2); };
-  const submit = (e) => {
-    e.preventDefault();
+  const submit = async (e) => {
+    e.preventDefault(); setServerErr("");
     const n = validate2(); setErrs(n); if (Object.keys(n).length) return;
+    if (!window.nmAuth || !window.nmAuth.on) { setServerErr("서버 설정(supabase-config.js)이 비어 있습니다."); return; }
     setSubmitting(true);
-    setTimeout(() => {
-      try {
-        const k = "nonamed.users.v1"; const list = JSON.parse(localStorage.getItem(k)) || [];
-        if (list.some(u => u.id === f.id)) { setSubmitting(false); setErrs({ id: "이미 사용 중인 아이디입니다." }); return; }
-        list.push({ id: f.id, pw: f.pw, company: f.company, ceo: f.ceo, biz: f.biz, phone: f.phone, email: f.email, at: new Date().toISOString() });
-        localStorage.setItem(k, JSON.stringify(list));
-      } catch (err) {}
+    try {
+      const r = await window.nmAuth.signUp({ email: f.email, pw: f.pw, name: f.ceo.trim(), phone: f.phone, company: f.company.trim(), biz: f.biz });
       setSubmitting(false); setDone(true);
-      setTimeout(() => { window.location.href = "login.html"; }, 1400);
-    }, 700);
+      if (r.needConfirm) setNeedConfirm(true);
+      else setTimeout(() => { window.location.href = "dashboard.html"; }, 1200);
+    } catch (x) {
+      setSubmitting(false);
+      const m = window.nmAuth.errMsg(x);
+      if (/이메일/.test(m)) setErrs({ email: m }); else setServerErr(m);
+    }
   };
 
   const eye = <button type="button" className="field-eye" onClick={() => setShowPw(s => !s)} aria-label={showPw ? "숨기기" : "표시"}>{showPw ? <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" stroke="currentColor" strokeWidth="1.2"/><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.2"/></svg> : <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8s2.5-4.5 6-4.5c1.3 0 2.5.4 3.5 1M14 8s-2.5 4.5-6 4.5c-1.3 0-2.5-.4-3.5-1M2 2l12 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>}</button>;
@@ -92,10 +94,9 @@ function SignupApp() {
           </div>
         ) : (
           <div className="fields su-fields">
-            <SuField k="id" label="아이디" value={f.id} onChange={set("id")} focused={focused} setFocused={setFocused} err={errs.id} inputRef={firstRef} autoComplete="username" />
-            <SuField k="pw" label="비밀번호 (8자 이상)" type={showPw ? "text" : "password"} value={f.pw} onChange={set("pw")} focused={focused} setFocused={setFocused} err={errs.pw} autoComplete="new-password" right={eye} />
+            <SuField k="email" label="이메일 (로그인 아이디)" type="email" value={f.email} onChange={set("email")} focused={focused} setFocused={setFocused} err={errs.email} inputRef={firstRef} autoComplete="email" inputMode="email" />
+            <SuField k="pw" label="비밀번호 (영문·숫자 8자 이상)" type={showPw ? "text" : "password"} value={f.pw} onChange={set("pw")} focused={focused} setFocused={setFocused} err={errs.pw} autoComplete="new-password" right={eye} />
             <SuField k="pw2" label="비밀번호 확인" type={showPw ? "text" : "password"} value={f.pw2} onChange={set("pw2")} focused={focused} setFocused={setFocused} err={errs.pw2} autoComplete="new-password" />
-            <SuField k="email" label="이메일 (선택)" type="email" value={f.email} onChange={set("email")} focused={focused} setFocused={setFocused} err={errs.email} autoComplete="email" />
             <div className="su-agree">
               <button type="button" className={`check ${f.agree ? "on" : ""}`} onClick={() => set("agree")(!f.agree)} aria-pressed={f.agree}>
                 <span className="check-box">{f.agree ? <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5.2l2 2L8 3" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg> : null}</span>
@@ -106,6 +107,7 @@ function SignupApp() {
           </div>
         )}
 
+        {serverErr ? <div className="hint hint-err" role="alert" style={{ maxWidth: 380 }}><span className="dot" /> {serverErr}</div> : null}
         <div className="su-actions">
           {step === 2 ? <button type="button" className="su-back" onClick={() => { setErrs({}); setStep(1); }}>← 이전</button> : <span />}
           <button type="submit" className={`submit ${submitting ? "is-loading" : ""} ${done ? "is-success" : ""}`} disabled={submitting || done}>
@@ -114,11 +116,11 @@ function SignupApp() {
           </button>
         </div>
 
-        <div className="su-social"><span className="su-social-k">간편 가입</span>{[["kakao", "K", "#FEE500", "#191600", "카카오"], ["naver", "N", "#03C75A", "#fff", "네이버"], ["google", "G", "#fff", "#1F1A14", "구글"]].map(([k, m, bg, fg, lb]) => <a key={k} href={"login.html?social=" + k} className="su-soc" style={{ background: bg, color: fg }} title={lb + "로 계속하기"}>{m}</a>)}</div>
+        {/* 간편 가입(카카오·구글)은 다음 단계에서 연결 */}
         <div className="card-foot"><span>이미 계정이 있으신가요?</span><a href="login.html">로그인 →</a></div>
       </form>
 
-      {done ? <div className="success-overlay" role="status"><div className="so-inner"><div className="so-ring" /><div className="so-text">가입이 완료되었습니다. 로그인 화면으로 이동합니다…</div></div></div> : null}
+      {done ? <div className="success-overlay" role="status"><div className="so-inner">{needConfirm ? null : <div className="so-ring" />}{needConfirm ? <div className="so-text" style={{ textAlign: "center", lineHeight: 1.7 }}><b>{f.email.trim()}</b> 로 인증 메일을 보냈습니다.<br />메일의 링크를 누른 뒤 로그인해 주세요.<br /><a href="login.html" style={{ color: "var(--ink)", fontWeight: 600 }}>로그인 화면으로 →</a></div> : <div className="so-text">가입이 완료되었습니다. 대시보드로 이동합니다…</div>}</div></div> : null}
     </div>
   );
 }

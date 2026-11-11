@@ -250,65 +250,53 @@ function FindIdModal({ onClose, onUseId }) {
   );
 }
 
-/* 비밀번호 재설정 — 아이디 + 휴대폰 인증번호 (목업: 발송 번호를 화면에 표시) */
-function ResetPwModal({ initialId, onClose, onDone }) {
-  const [step, setStep] = useState(1); // 1 본인확인 · 2 새 비밀번호
-  const [uid, setUid] = useState(initialId || ""); const [phone, setPhone] = useState("");
-  const [sent, setSent] = useState(null); const [code, setCode] = useState(""); const [left, setLeft] = useState(0);
-  const [pw1, setPw1] = useState(""); const [pw2, setPw2] = useState(""); const [err, setErr] = useState("");
-  useEffect(() => { if (!left) return; const t = setTimeout(() => setLeft(l => l - 1), 1000); return () => clearTimeout(t); }, [left]);
-  const fmtPhone = (v) => { const d = lgDigits(v).slice(0, 11); return d.length > 7 ? d.slice(0, 3) + "-" + d.slice(3, 7) + "-" + d.slice(7) : d.length > 3 ? d.slice(0, 3) + "-" + d.slice(3) : d; };
-  const send = () => {
-    setErr("");
-    if (!uid.trim()) return setErr("아이디를 입력해 주세요.");
-    if (lgDigits(phone).length < 10) return setErr("휴대폰 번호를 입력해 주세요.");
-    const u = lgUsers().find(x => x.id === uid.trim());
-    if (!u || lgDigits(u.phone) !== lgDigits(phone)) return setErr("아이디와 가입 휴대폰 번호가 일치하지 않습니다.");
-    const c = String(Math.floor(100000 + Math.random() * 900000));
-    setSent(c); setCode(""); setLeft(180);
-  };
-  const verify = () => {
-    setErr("");
-    if (!sent) return setErr("인증번호를 먼저 받아 주세요.");
-    if (!left) return setErr("인증 시간이 만료되었습니다. 다시 받아 주세요.");
-    if (code.trim() !== sent) return setErr("인증번호가 일치하지 않습니다.");
-    setStep(2);
-  };
-  const save = (e) => {
+/* 비밀번호 재설정 — 가입 이메일로 재설정 링크 발송 (Supabase) */
+function ResetPwModal({ initialId, onClose }) {
+  const [email, setEmail] = useState(/@/.test(initialId || "") ? initialId : "");
+  const [sent, setSent] = useState(false); const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
+  const send = async (e) => {
     e && e.preventDefault(); setErr("");
-    if (pw1.length < 8 || !/[A-Za-z]/.test(pw1) || !/\d/.test(pw1)) return setErr("영문·숫자를 포함해 8자 이상 입력해 주세요.");
-    if (pw1 !== pw2) return setErr("비밀번호가 서로 다릅니다.");
-    lgSaveUsers(lgUsers().map(u => u.id === uid.trim() ? { ...u, pw: pw1, pwAt: new Date().toISOString() } : u));
-    const f = lgFails(); delete f[uid.trim()]; lgSetFails(f);
-    onDone(uid.trim());
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setErr("가입한 이메일을 입력해 주세요.");
+    if (!window.nmAuth || !window.nmAuth.on) return setErr("서버 설정이 없어 재설정 메일을 보낼 수 없습니다.");
+    setBusy(true);
+    try { await window.nmAuth.resetPw(email); setSent(true); } catch (x) { setErr(window.nmAuth.errMsg(x)); } finally { setBusy(false); }
   };
-  const mmss = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
   return (
-    <LgModal title="비밀번호 재설정" sub={step === 1 ? "가입 시 등록한 휴대폰으로 본인 확인을 합니다." : "새 비밀번호를 입력하세요."} onClose={onClose}
-      foot={step === 1 ? <><button type="button" className="lg-btn" onClick={onClose}>취소</button><button type="button" className="lg-btn is-pri" onClick={verify} disabled={!sent}>다음</button></>
-        : <><button type="button" className="lg-btn" onClick={onClose}>취소</button><button type="button" className="lg-btn is-pri" onClick={save}>변경</button></>}>
-      <div className="lg-steps"><span className={step === 1 ? "is-on" : "is-done"}>1 본인 확인</span><span className="lg-steps-line" /><span className={step === 2 ? "is-on" : ""}>2 새 비밀번호</span></div>
-      {step === 1 ? (
-        <div className="lg-form">
-          <LgField label="아이디"><input className="lg-inp" autoFocus={!initialId} value={uid} onChange={(e) => setUid(e.target.value)} /></LgField>
-          <LgField label="휴대폰">
-            <div className="lg-row"><input className="lg-inp is-mono" autoFocus={!!initialId} value={phone} onChange={(e) => setPhone(fmtPhone(e.target.value))} inputMode="numeric" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); send(); } }} /><button type="button" className="lg-btn is-sm" onClick={send}>{sent ? "재전송" : "인증번호 받기"}</button></div>
-          </LgField>
-          {sent ? (
-            <LgField label="인증번호">
-              <div className="lg-row"><input className="lg-inp is-mono" autoFocus value={code} onChange={(e) => setCode(lgDigits(e.target.value).slice(0, 6))} inputMode="numeric" maxLength={6} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); verify(); } }} /><span className={`lg-timer ${left < 30 ? "is-warn" : ""}`}>{left ? mmss : "만료"}</span></div>
-            </LgField>
-          ) : null}
-          {sent ? <div className="lg-msg is-info">목업 — 발송된 인증번호: <b className="is-mono">{sent}</b></div> : null}
-        </div>
+    <LgModal title="비밀번호 재설정" sub={sent ? "메일함을 확인해 주세요." : "가입한 이메일로 재설정 링크를 보내 드립니다."} onClose={onClose}
+      foot={sent ? <button type="button" className="lg-btn is-pri" onClick={onClose}>확인</button>
+        : <><button type="button" className="lg-btn" onClick={onClose}>취소</button><button type="button" className="lg-btn is-pri" onClick={send} disabled={busy}>{busy ? "보내는 중…" : "재설정 메일 받기"}</button></>}>
+      {sent ? (
+        <div className="lg-msg is-info"><b>{email.trim()}</b> 로 메일을 보냈습니다. 메일의 링크를 누르면 이 화면에서 새 비밀번호를 정할 수 있습니다. 메일이 안 보이면 스팸함도 확인해 주세요.</div>
       ) : (
-        <form className="lg-form" onSubmit={save}>
-          <LgField label="새 비밀번호"><input className="lg-inp" type="password" autoFocus value={pw1} onChange={(e) => setPw1(e.target.value)} /></LgField>
-          <LgField label="비밀번호 확인"><input className="lg-inp" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} /></LgField>
-          <div className="lg-msg">영문·숫자 포함 8자 이상</div>
+        <form className="lg-form" onSubmit={send}>
+          <LgField label="이메일"><input className="lg-inp" type="email" autoFocus value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></LgField>
           <button type="submit" hidden />
         </form>
       )}
+      {err ? <div className="lg-msg is-err">{err}</div> : null}
+    </LgModal>
+  );
+}
+
+/* 재설정 메일 링크로 들어왔을 때 — 새 비밀번호 저장 */
+function NewPwModal({ onClose, onDone }) {
+  const [pw1, setPw1] = useState(""); const [pw2, setPw2] = useState(""); const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
+  const save = async (e) => {
+    e && e.preventDefault(); setErr("");
+    if (pw1.length < 8 || !/[A-Za-z]/.test(pw1) || !/\d/.test(pw1)) return setErr("영문·숫자를 포함해 8자 이상 입력해 주세요.");
+    if (pw1 !== pw2) return setErr("비밀번호가 서로 다릅니다.");
+    setBusy(true);
+    try { await window.nmAuth.updatePw(pw1); onDone(); } catch (x) { setErr(window.nmAuth.errMsg(x) + " 재설정 메일을 다시 받아 주세요."); } finally { setBusy(false); }
+  };
+  return (
+    <LgModal title="새 비밀번호 설정" sub="새로 사용할 비밀번호를 입력하세요." onClose={onClose}
+      foot={<><button type="button" className="lg-btn" onClick={onClose}>취소</button><button type="button" className="lg-btn is-pri" onClick={save} disabled={busy}>{busy ? "저장 중…" : "변경"}</button></>}>
+      <form className="lg-form" onSubmit={save}>
+        <LgField label="새 비밀번호"><input className="lg-inp" type="password" autoFocus value={pw1} onChange={(e) => setPw1(e.target.value)} autoComplete="new-password" /></LgField>
+        <LgField label="비밀번호 확인"><input className="lg-inp" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" /></LgField>
+        <div className="lg-msg">영문·숫자 포함 8자 이상</div>
+        <button type="submit" hidden />
+      </form>
       {err ? <div className="lg-msg is-err">{err}</div> : null}
     </LgModal>
   );
@@ -359,7 +347,15 @@ function LoginCard() {
   const [notice, setNotice] = useState("");
   const [social, setSocial] = useState(() => { const k = new URLSearchParams(window.location.search).get("social"); return LG_SOCIAL.find(s => s.key === k) || null; });
   // 자동 로그인: "로그인 유지"로 저장된 세션이 있으면 바로 대시보드로
-  useEffect(() => { try { const s = JSON.parse(localStorage.getItem(LG_SESSION)); if (s && s.keep && (!s.exp || s.exp > Date.now())) window.location.replace("dashboard.html"); } catch (e) {} }, []);
+  const [newPwOpen, setNewPwOpen] = useState(() => !!(window.nmAuth && window.nmAuth.recovery));
+  useEffect(() => { const fn = () => setNewPwOpen(true); window.addEventListener("nonamed:recovery", fn); return () => window.removeEventListener("nonamed:recovery", fn); }, []);
+  useEffect(() => {
+    if (window.nmAuth && window.nmAuth.recovery) return;
+    let s = null; try { s = JSON.parse(localStorage.getItem(LG_SESSION)); } catch (e) {}
+    if (!(s && s.keep && (!s.exp || s.exp > Date.now()))) return;
+    if (!window.nmAuth || !window.nmAuth.on) return;
+    window.nmAuth.getSession().then(ss => { if (ss) window.location.replace("dashboard.html"); }).catch(() => {});
+  }, []);
   const [showPw, setShowPw] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -395,46 +391,27 @@ function LoginCard() {
     if (e.getModifierState) setCapsLock(e.getModifierState("CapsLock"));
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (submitting) return;
-    setErrMsg("");
-    if (!id.trim()) { setStatus("error"); setErrMsg("아이디를 입력해 주세요."); idRef.current?.focus(); return; }
-    if (pw.length < 4) { setStatus("error"); setErrMsg("비밀번호는 4자 이상이어야 합니다."); return; }
+    setErrMsg(""); setNotice("");
+    const email = id.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setStatus("error"); setErrMsg("이메일을 입력해 주세요."); idRef.current?.focus(); return; }
+    if (pw.length < 6) { setStatus("error"); setErrMsg("비밀번호를 입력해 주세요."); return; }
+    if (!window.nmAuth || !window.nmAuth.on) { setStatus("error"); setErrMsg("서버 설정(supabase-config.js)이 비어 있습니다."); return; }
     setSubmitting(true);
     setStatus(null);
-    const uid = id.trim();
-    if (lockInfo) { setStatus("error"); setErrMsg(`로그인 ${LG_MAX_FAIL}회 실패로 잠긴 계정입니다. 잠시 후 다시 시도하거나 비밀번호를 재설정해 주세요.`); setSubmitting(false); return; }
-    setTimeout(() => {
-      // demo: id "admin" + pw "1234" 또는 회원가입한 계정
-      const users = lgUsers();
-      const u = users.find(x => x.id === uid && x.pw === pw);
-      const ok = (uid === "admin" && pw === "1234") || !!u;
-      const fails = lgFails();
-      if (ok) {
-        delete fails[uid]; lgSetFails(fails);
-        setStatus("success");
-        setSubmitting(false);
-        try {
-          if (remember) localStorage.setItem(LG_SAVED_ID, uid); else localStorage.removeItem(LG_SAVED_ID);
-          localStorage.setItem(LG_SESSION, JSON.stringify({ id: uid, company: u ? u.company : "nonamed", ceo: u ? u.ceo : "관리자", at: Date.now(), keep, exp: keep ? Date.now() + 30 * 864e5 : null }));
-          if (!keep) sessionStorage.setItem("nonamed.sessionAlive.v1", "1");
-        } catch (e) {}
-        setTimeout(() => { window.location.href = "dashboard.html"; }, 700);
-      } else {
-        const known = uid === "admin" || users.some(x => x.id === uid);
-        let msg = "아이디 또는 비밀번호가 올바르지 않습니다.";
-        if (known) {
-          const cur = (fails[uid] && fails[uid].count) || 0; const n = cur + 1;
-          if (n >= LG_MAX_FAIL) { fails[uid] = { count: n, until: Date.now() + LG_LOCK_MIN * 60000 }; msg = `비밀번호를 ${LG_MAX_FAIL}회 잘못 입력해 ${LG_LOCK_MIN}분간 로그인이 제한됩니다.`; }
-          else { fails[uid] = { count: n }; msg += ` (${n}/${LG_MAX_FAIL}회)`; }
-          lgSetFails(fails);
-        }
-        setStatus("error");
-        setErrMsg(msg);
-        setSubmitting(false);
-      }
-    }, 900);
+    try {
+      await window.nmAuth.signIn(email, pw, keep);
+      try { if (remember) localStorage.setItem(LG_SAVED_ID, email); else localStorage.removeItem(LG_SAVED_ID); } catch (x) {}
+      setStatus("success");
+      setSubmitting(false);
+      setTimeout(() => { window.location.href = "dashboard.html"; }, 600);
+    } catch (x) {
+      setStatus("error");
+      setErrMsg(window.nmAuth.errMsg(x));
+      setSubmitting(false);
+    }
   };
 
   const isCircle = !LG_VARIANT && t.layout === "circle";
@@ -496,16 +473,17 @@ function LoginCard() {
         {/* fields */}
         <div className="fields">
           <label className={`field ${focused==='id' ? 'is-focus':''} ${id ? 'is-filled':''}`}>
-            <span className="field-label">아이디</span>
+            <span className="field-label">이메일</span>
             <input
               ref={idRef}
-              type="text"
-              autoComplete="username"
+              type="email"
+              inputMode="email"
+              autoComplete="username email"
               value={id}
               onChange={e => { setId(e.target.value); if(status==='error') setStatus(null); }}
               onFocus={() => setFocused('id')}
               onBlur={() => setFocused(null)}
-              placeholder="아이디를 입력하세요"
+              placeholder="가입한 이메일"
               spellCheck={false}
             />
             {id ? (
@@ -575,11 +553,8 @@ function LoginCard() {
           </button>
         </div>
         <div className="row-links lg-links">
-          <a href="#" onClick={(e) => { e.preventDefault(); setFindOpen(true); }}>아이디 찾기</a>
-          <span className="dotsep" />
           <a href="#" onClick={(e) => { e.preventDefault(); setResetOpen(true); }}>비밀번호 재설정</a>
         </div>
-        {lockInfo ? <div className="hint hint-err lg-lock" role="alert"><span className="dot" /> 계정 잠김 · {Math.floor(lockLeft / 60)}:{String(lockLeft % 60).padStart(2, "0")} 후 해제 <a href="#" onClick={(e) => { e.preventDefault(); setResetOpen(true); }}>비밀번호 재설정</a></div> : null}
         {notice ? <div className="hint lg-ok"><span className="dot" /> {notice}</div> : null}
 
         {/* submit */}
@@ -601,7 +576,7 @@ function LoginCard() {
         </button>
 
         {/* footer line */}
-        <SocialRow onPick={setSocial} />
+        {/* 간편 로그인(카카오·구글)은 다음 단계에서 연결 */}
 
         <div className="card-foot">
           <span>최초 사용자이신가요?</span>
@@ -609,11 +584,9 @@ function LoginCard() {
         </div>
 
         {/* tiny mono hint */}
-        <div className="hint-demo">demo · admin / 1234</div>
       </form>
-      {social ? <SocialModal provider={social} keep={keep} onClose={() => setSocial(null)} /> : null}
-      {findOpen ? <FindIdModal onClose={() => setFindOpen(false)} onUseId={(v) => { setId(v); setPw(""); setFindOpen(false); setStatus(null); setNotice("아이디를 찾았습니다. 비밀번호를 입력해 주세요."); }} /> : null}
-      {resetOpen ? <ResetPwModal initialId={id.trim()} onClose={() => setResetOpen(false)} onDone={(v) => { setId(v); setPw(""); setResetOpen(false); setStatus(null); setNotice("비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요."); }} /> : null}
+      {resetOpen ? <ResetPwModal initialId={id.trim()} onClose={() => setResetOpen(false)} /> : null}
+      {newPwOpen ? <NewPwModal onClose={() => { setNewPwOpen(false); history.replaceState(null, "", location.pathname); }} onDone={() => { setNewPwOpen(false); history.replaceState(null, "", location.pathname); setPw(""); setStatus(null); setNotice("비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요."); if (window.nmAuth && window.nmAuth.sb) window.nmAuth.sb.auth.signOut({ scope: "local" }).catch(() => {}); }} /> : null}
 
       {/* success overlay */}
       {status==='success' ? (

@@ -35,7 +35,15 @@ const AC_DEFAULT_PERMS = {
 };
 function acPermsOf(c) { const p = (c && c.perms) || {}; return { "일반": { ...AC_DEFAULT_PERMS["일반"], ...(p["일반"] || {}) }, "조회전용": { ...AC_DEFAULT_PERMS["조회전용"], ...(p["조회전용"] || {}) } }; }
 function acLevel(menu) { const s = acSession(); if (!s || !s.role || s.role === "관리자") return "입력"; const c = acMyCompany(); if (!c) return "입력"; return (acPermsOf(c)[s.role] || {})[menu] || "입력"; }
-function acSaveCompany(c) { const list = acCompanies(); acWrite(AC_COMP, list.some(x => x.id === c.id) ? list.map(x => x.id === c.id ? c : x) : [...list, c]); window.dispatchEvent(new CustomEvent("nonamed:account")); }
+/* Supabase 연동 여부 (nm-auth.js) */
+const acServer = () => !!(window.nmAuth && window.nmAuth.on);
+function acLogout() { if (acServer()) { window.nmAuth.signOut(); return; } try { localStorage.removeItem(AC_SESSION); sessionStorage.removeItem("nonamed.sessionAlive.v1"); } catch (e) {} window.location.href = "login.html"; }
+window.acLogout = acLogout;
+function acSaveCompany(c) {
+  const list = acCompanies(); const prev = list.find(x => x.id === c.id);
+  acWrite(AC_COMP, prev ? list.map(x => x.id === c.id ? c : x) : [...list, c]); window.dispatchEvent(new CustomEvent("nonamed:account"));
+  if (acServer() && prev) window.nmAuth.saveCompany(c, prev).catch(e => { if (window.showToast) window.showToast("서버 저장 실패: " + window.nmAuth.errMsg(e)); window.nmAuth.sync().catch(() => {}); });
+}
 function acCreateCompany({ name, ceo, biz, phone }) {
   const s = acSession() || {};
   const c = { id: "C-" + Date.now().toString(36).toUpperCase(), name: name.trim(), ceo: (ceo || "").trim(), biz: biz || "", phone: phone || "", owner: s.id, invite: acCode(), created: new Date().toISOString(), trialEnd: new Date(Date.now() + AC_TRIAL_DAYS * 864e5).toISOString(),
@@ -64,6 +72,7 @@ function acNeedsOnboard() {
     if (m.role !== s.role || c.name !== s.company) acSetSession({ role: m.role, company: c.name });
     return false;
   }
+  if (acServer()) return true; // 서버 모드: 회사는 로그인 때 동기화됨 → 없으면 선택 팝업
   const u = acRead(AC_USERS, []).find(x => x.id === s.id);
   const mine = acCompanies().find(c => c.members.some(m => m.userId === s.id));
   if (mine) { acSetSession({ companyId: mine.id, company: mine.name, role: mine.members.find(m => m.userId === s.id).role }); return false; }
@@ -96,23 +105,27 @@ function OnboardModal({ onDone }) {
   const [f, setF] = React.useState({ name: "", ceo: s.ceo || "", biz: "", phone: "" });
   const [code, setCode] = React.useState("");
   const [err, setErr] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
   const set = (k, fmt) => (e) => setF(p => ({ ...p, [k]: fmt ? fmt(e.target.value) : e.target.value }));
-  const submit = (e) => {
-    e && e.preventDefault(); setErr("");
+  const submit = async (e) => {
+    e && e.preventDefault(); if (busy) return; setErr("");
     if (mode === "new") {
       if (!f.name.trim()) return setErr("회사명(상호)을 입력해 주세요.");
       if (f.biz && acDigits(f.biz).length !== 10) return setErr("사업자등록번호 10자리를 확인해 주세요.");
-      acCreateCompany(f); onDone();
+      if (!acServer()) { acCreateCompany(f); onDone(); return; }
+      setBusy(true);
+      try { await window.nmAuth.createCompany(f); onDone(); } catch (x) { setErr(window.nmAuth.errMsg(x)); } finally { setBusy(false); }
     } else {
       if (acDigits(code.replace(/[A-Za-z]/g, "0")).length < 8) return setErr("초대코드 8자리를 입력해 주세요.");
-      if (!acJoinCompany(code)) return setErr("일치하는 회사가 없습니다. 초대코드를 다시 확인해 주세요.");
-      onDone();
+      if (!acServer()) { if (!acJoinCompany(code)) return setErr("일치하는 회사가 없습니다. 초대코드를 다시 확인해 주세요."); onDone(); return; }
+      setBusy(true);
+      try { const s = await window.nmAuth.joinCompany(code); if (!s || !s.companyId) throw new Error("일치하는 회사가 없습니다"); onDone(); } catch (x) { setErr(window.nmAuth.errMsg(x)); } finally { setBusy(false); }
     }
   };
   React.useEffect(() => { const fn = (e) => { if (e.key === "F8") { e.preventDefault(); submit(); } }; window.addEventListener("keydown", fn); return () => window.removeEventListener("keydown", fn); });
   return (
     <AcModal closable={false} title={`환영합니다${s.ceo ? ", " + s.ceo + "님" : ""}`} sub="장부는 회사(사업장) 단위로 관리됩니다. 시작 방법을 선택하세요."
-      foot={<button type="button" className="ac-btn is-pri" onClick={submit}>{mode === "new" ? "회사 만들고 시작" : "합류하기"} <kbd>F8</kbd></button>}>
+      foot={<><button type="button" className="ac-btn is-ghost" onClick={acLogout}>로그아웃</button><button type="button" className="ac-btn is-pri" onClick={submit} disabled={busy}>{busy ? "처리 중…" : mode === "new" ? "회사 만들고 시작" : "합류하기"} <kbd>F8</kbd></button></>}>
       <div className="ac-choice">
         <button type="button" className={"ac-opt" + (mode === "new" ? " is-on" : "")} onClick={() => { setMode("new"); setErr(""); }}>
           <b>새 회사 만들기</b><span>사장님·1인 사업자. 만든 사람이 관리자가 됩니다.</span>
@@ -198,7 +211,7 @@ function CompanyModal({ initialTab = "members", onClose }) {
             {c.members.map(m => (
               <div key={m.userId} className="ac-mem">
                 <span className="ac-av">{String(m.name).slice(0, 1)}</span>
-                <div className="ac-mem-n"><b>{m.name}{m.userId === s.id ? <em> (나)</em> : null}{m.userId === c.owner ? <i>소유자</i> : null}</b><span className="is-mono">{m.userId} · {String(m.joined).slice(0, 10)} 합류</span></div>
+                <div className="ac-mem-n"><b>{m.name}{m.userId === s.id ? <em> (나)</em> : null}{m.userId === c.owner ? <i>소유자</i> : null}</b><span className="is-mono">{m.email || m.userId} · {String(m.joined).slice(0, 10)} 합류</span></div>
                 {isAdmin ? (
                   <select className="ac-sel" value={m.role} onChange={(e) => setRole(m.userId, e.target.value)} title={AC_ROLE_DESC[m.role]}>{AC_ROLES.map(r => <option key={r} value={r}>{r}</option>)}</select>
                 ) : <span className={"ac-role r-" + m.role}>{m.role}</span>}
@@ -232,7 +245,7 @@ function PaymentModal({ locked, onClose, onDone }) {
   const [err, setErr] = React.useState(""); const [busy, setBusy] = React.useState(false);
   const fmtNum = (v) => acDigits(v).slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1-");
   const fmtExp = (v) => { const d = acDigits(v).slice(0, 4); return d.length > 2 ? d.slice(0, 2) + "/" + d.slice(2) : d; };
-  const logout = () => { try { localStorage.removeItem(AC_SESSION); sessionStorage.removeItem("nonamed.sessionAlive.v1"); } catch (e) {} location.href = "login.html"; };
+  const logout = acLogout;
   const submit = (e) => {
     e && e.preventDefault(); setErr("");
     const n = acDigits(f.num), x = acDigits(f.exp), o = acDigits(f.owner);
@@ -286,24 +299,24 @@ function AccountMenu({ className = "user-pill", chevron }) {
   const [open, setOpen] = React.useState(false);
   const [modal, setModal] = React.useState(null);
   const [onboard, setOnboard] = React.useState(() => acNeedsOnboard());
-  React.useEffect(() => { const fn = () => bump(n => n + 1); window.addEventListener("nonamed:account", fn); window.addEventListener("storage", fn); return () => { window.removeEventListener("nonamed:account", fn); window.removeEventListener("storage", fn); }; }, []);
+  React.useEffect(() => { const fn = () => { bump(n => n + 1); setOnboard(o => o ? acNeedsOnboard() : o); }; window.addEventListener("nonamed:account", fn); window.addEventListener("storage", fn); return () => { window.removeEventListener("nonamed:account", fn); window.removeEventListener("storage", fn); }; }, []);
   React.useEffect(() => { if (!open) return; const fn = (e) => { if (!e.target.closest(".ac-menu-wrap")) setOpen(false); }; document.addEventListener("mousedown", fn); return () => document.removeEventListener("mousedown", fn); }, [open]);
   const s = acSession();
   const bill = acBilling(acMyCompany());
   const [payOpen, setPayOpen] = React.useState(false);
   const locked = !onboard && bill.status === "expired";
   const co = (s && s.company) || "회사 미지정"; const nm = (s && (s.ceo || s.id)) || "사용자";
-  const logout = () => { try { localStorage.removeItem(AC_SESSION); sessionStorage.removeItem("nonamed.sessionAlive.v1"); } catch (e) {} window.location.href = "login.html"; };
+  const logout = acLogout;
   return (
     <span className="ac-menu-wrap">
-      <button className={className} type="button" onClick={() => setOpen(o => !o)} title={s ? `${co} · ${s.id}` : "로그인 정보 없음"}>
+      <button className={className} type="button" onClick={() => setOpen(o => !o)} title={s ? `${co} · ${s.email || s.id}` : "로그인 정보 없음"}>
         <span className="user-av">{String(nm).slice(0, 1)}</span>
         <span className="user-name"><span className="ac-co">{co}</span>{nm}{s && s.role && s.role !== "관리자" ? <span className="ac-co is-role">{s.role}</span> : null}</span>
         {chevron || <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
       </button>
       {open ? (
         <div className="ac-menu">
-          <div className="ac-menu-h"><b>{nm}</b><span className="is-mono">{s ? s.id : ""}</span><span>{co} · {(s && s.role) || "-"}</span>{bill.status === "trial" ? <span className="ac-trial">무료 체험 {bill.left}일 남음</span> : bill.status === "active" && bill.card ? <span className="ac-trial is-ok">{bill.card.brand} •••• {bill.card.last4} · 다음 결제 {String(bill.nextBill).slice(0, 10)}</span> : null}</div>
+          <div className="ac-menu-h"><b>{nm}</b><span className="is-mono">{s ? (s.email || s.id) : ""}</span><span>{co} · {(s && s.role) || "-"}</span>{bill.status === "trial" ? <span className="ac-trial">무료 체험 {bill.left}일 남음</span> : bill.status === "active" && bill.card ? <span className="ac-trial is-ok">{bill.card.brand} •••• {bill.card.last4} · 다음 결제 {String(bill.nextBill).slice(0, 10)}</span> : null}</div>
           {s && s.role === "관리자" ? <button type="button" onClick={() => { setOpen(false); setPayOpen(true); }}>{bill.status === "active" ? "결제수단 변경" : "결제수단 등록"}</button> : null}
           <button type="button" onClick={() => { setOpen(false); setModal("members"); }}>구성원 관리</button>
           <button type="button" onClick={() => { setOpen(false); setModal("perms"); }}>권한 설정</button>
